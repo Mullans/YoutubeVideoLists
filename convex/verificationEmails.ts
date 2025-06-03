@@ -9,11 +9,11 @@ export const sendVerificationEmail = internalAction({
     token: v.string(),
   },
   handler: async (ctx, args) => {
-    const apiKey = process.env.RESEND_API_KEY || process.env.CONVEX_RESEND_API_KEY;
+    const apiKey = process.env.RESEND_API_KEY;
     const resend = new Resend(apiKey!);
-    
+
     const verificationUrl = `https://seaninashoe.com/verify-email?token=${args.token}`;
-    
+
     const emailHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <h1 style="color: #333; text-align: center;">Verify Your Email Address</h1>
@@ -23,7 +23,7 @@ export const sendVerificationEmail = internalAction({
           </p>
         </div>
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${verificationUrl}" 
+          <a href="${verificationUrl}"
              style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
             Verify Email Address
           </a>
@@ -36,7 +36,7 @@ export const sendVerificationEmail = internalAction({
 
     const { data, error } = await resend.emails.send({
       from: "VideoList Curator <noreply@seaninashoe.com>",
-      to: args.email,
+      to: [args.email],
       subject: "Verify your email address - VideoList Curator",
       html: emailHtml,
     });
