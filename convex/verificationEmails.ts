@@ -10,6 +10,7 @@ export const sendVerificationEmail = internalAction({
   },
   handler: async (ctx, args) => {
     const apiKey = process.env.RESEND_API_KEY;
+    console.log("📧 API Key prefix:", apiKey ? apiKey.substring(0, 10) + "..." : "NOT_FOUND");
     const resend = new Resend(apiKey!);
 
     const verificationUrl = `https://seaninashoe.com/verify-email?token=${args.token}`;
