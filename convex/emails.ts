@@ -21,38 +21,38 @@ export const sendInvitationEmail = internalAction({
     }
 
     console.log("🚀 Starting sendInvitationEmail with invitationId:", args.invitationId);
-    
+
     // Check if API key is available (using Convex proxy)
-    const apiKey = process.env.CONVEX_RESEND_API_KEY;
+    const apiKey = process.env.RESEND_API_KEY;
     const baseUrl = process.env.RESEND_BASE_URL;
     console.log("📧 API Key available:", !!apiKey);
     console.log("📧 Base URL available:", !!baseUrl);
     console.log("📧 API Key prefix:", apiKey ? apiKey.substring(0, 10) + "..." : "NOT_FOUND");
-    
+
     const resend = new Resend(apiKey!);
-    
+
     // For emails, we'll use a placeholder URL since the WebContainer isn't publicly accessible
     const shareUrl = `https://your-app-domain.com/shared/${invitation.list.shareToken}`;
     console.log("🔗 Share URL:", shareUrl);
-    
+
     const emailHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <h1 style="color: #333; text-align: center;">You've been invited to a video list!</h1>
-        
+
         <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h2 style="color: #495057; margin-top: 0;">${invitation.list.name}</h2>
           <p style="color: #6c757d; margin-bottom: 0;">
             ${invitation.inviterName} has invited you to collaborate on their video list.
           </p>
         </div>
-        
+
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${shareUrl}" 
+          <a href="${shareUrl}"
              style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
             View List
           </a>
         </div>
-        
+
         <div style="background-color: #e9ecef; padding: 15px; border-radius: 6px; margin: 20px 0;">
           <h3 style="margin-top: 0; color: #495057;">What you can do:</h3>
           <ul style="color: #6c757d; margin-bottom: 0;">
@@ -61,7 +61,7 @@ export const sendInvitationEmail = internalAction({
             ${invitation.permissions.canRemove ? '<li>Edit and remove videos from the list</li>' : ''}
           </ul>
         </div>
-        
+
         <p style="color: #6c757d; font-size: 14px; text-align: center; margin-top: 30px;">
           If you don't want to receive these invitations, you can ignore this email.
         </p>
@@ -69,12 +69,12 @@ export const sendInvitationEmail = internalAction({
     `;
 
     const emailPayload = {
-      from: "VideoList Curator <noreply@videolist.example.com>",
+      from: "VideoList Curator <noreply@seaninashoe.com>",
       to: invitation.invitedEmail,
       subject: `You've been invited to "${invitation.list.name}" video list`,
       html: emailHtml,
     };
-    
+
     console.log("📤 Email payload:", {
       from: emailPayload.from,
       to: emailPayload.to,
