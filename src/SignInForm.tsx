@@ -2,11 +2,14 @@
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useMutation } from "convex/react";
+import { api } from "../convex/_generated/api";
 
 export function SignInForm() {
   const { signIn } = useAuthActions();
   const [flow, setFlow] = useState<"signIn" | "signUp">("signIn");
   const [submitting, setSubmitting] = useState(false);
+  const createVerificationToken = useMutation(api.emailVerification.createVerificationToken);
 
   return (
     <div className="w-full">
@@ -17,7 +20,20 @@ export function SignInForm() {
           setSubmitting(true);
           const formData = new FormData(e.target as HTMLFormElement);
           formData.set("flow", flow);
-          void signIn("password", formData).catch((error) => {
+          void signIn("password", formData)
+            .then(async () => {
+              if (flow === "signUp") {
+                const email = formData.get("email") as string;
+                try {
+                  await createVerificationToken({ email });
+                  toast.success("Account created! Please check your email to verify your account.");
+                } catch (error) {
+                  toast.error("Account created but failed to send verification email.");
+                }
+              }
+              setSubmitting(false);
+            })
+            .catch((error) => {
             let toastTitle = "";
             if (error.message.includes("Invalid password")) {
               toastTitle = "Invalid password. Please try again.";

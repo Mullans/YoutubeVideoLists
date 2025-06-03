@@ -17,6 +17,19 @@ export const loggedInUser = query({
     if (!user) {
       return null;
     }
-    return user;
+    
+    // Check if email is verified (only for non-anonymous users)
+    if (user.email && !user.emailVerificationTime) {
+      // User has email but hasn't verified it yet
+      return {
+        ...user,
+        emailVerified: false,
+      };
+    }
+    
+    return {
+      ...user,
+      emailVerified: true,
+    };
   },
 });

@@ -3,6 +3,15 @@ import { v } from "convex/values";
 import { authTables } from "@convex-dev/auth/server";
 
 const applicationTables = {
+  emailVerifications: defineTable({
+    email: v.string(),
+    token: v.string(),
+    expiresAt: v.number(),
+    verified: v.boolean(),
+  })
+    .index("by_email", ["email"])
+    .index("by_token", ["token"]),
+
   lists: defineTable({
     name: v.string(),
     ownerId: v.id("users"),

@@ -14,12 +14,14 @@ import type {
   FunctionReference,
 } from "convex/server";
 import type * as auth from "../auth.js";
+import type * as emailVerification from "../emailVerification.js";
 import type * as emails from "../emails.js";
 import type * as http from "../http.js";
 import type * as listItems from "../listItems.js";
 import type * as lists from "../lists.js";
 import type * as router from "../router.js";
 import type * as users from "../users.js";
+import type * as verificationEmails from "../verificationEmails.js";
 import type * as videoUtils from "../videoUtils.js";
 
 /**
@@ -32,12 +34,14 @@ import type * as videoUtils from "../videoUtils.js";
  */
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  emailVerification: typeof emailVerification;
   emails: typeof emails;
   http: typeof http;
   listItems: typeof listItems;
   lists: typeof lists;
   router: typeof router;
   users: typeof users;
+  verificationEmails: typeof verificationEmails;
   videoUtils: typeof videoUtils;
 }>;
 export declare const api: FilterApi<

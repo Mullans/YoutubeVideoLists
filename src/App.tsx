@@ -10,6 +10,8 @@ import { useState, useEffect } from "react";
 import { Id } from "../convex/_generated/dataModel";
 import { ListView } from "./ListView";
 import { SharedListView } from "./SharedListView";
+import { EmailVerificationBanner } from "./EmailVerificationBanner";
+import { EmailVerificationPage } from "./EmailVerificationPage";
 
 export default function App() {
   return (
@@ -34,13 +36,18 @@ function Content() {
   const [shareToken, setShareToken] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check if we're on a shared list URL
+    // Check if we're on a shared list URL or verification page
     const path = window.location.pathname;
     const sharedMatch = path.match(/^\/shared\/(.+)$/);
     if (sharedMatch) {
       setShareToken(sharedMatch[1]);
     }
   }, []);
+
+  // Check if we're on the email verification page
+  if (window.location.pathname === "/verify-email") {
+    return <EmailVerificationPage />;
+  }
 
   if (loggedInUser === undefined) {
     return (
@@ -80,6 +87,9 @@ function Content() {
       </Unauthenticated>
 
       <Authenticated>
+        {loggedInUser && loggedInUser.email && !loggedInUser.emailVerified && (
+          <EmailVerificationBanner email={loggedInUser.email} />
+        )}
         {selectedListId ? (
           <ListView
             listId={selectedListId}
@@ -87,7 +97,7 @@ function Content() {
           />
         ) : (
           <div className="space-y-6">
-            <CreateListForm />
+            {(!loggedInUser?.email || loggedInUser.emailVerified) && <CreateListForm />}
             <MyListsView onSelectList={setSelectedListId} />
             <SharedListsView onSelectList={setSelectedListId} />
           </div>
