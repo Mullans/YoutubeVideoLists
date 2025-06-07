@@ -3,7 +3,6 @@ import { api } from "../convex/_generated/api";
 import { useState, useEffect } from "react";
 import { AddListItemForm } from "./AddListItemForm";
 import { ListItemCard } from "./ListItemCard";
-import { SignInForm } from "./SignInForm";
 
 interface SharedListViewProps {
   shareToken: string;
@@ -28,24 +27,14 @@ export function SharedListView({ shareToken }: SharedListViewProps) {
         <p className="text-gray-600 mb-4">
           You have tried to access an invalid list. Please ensure that the list exists and you have permission to view it.
         </p>
-        {!loggedInUser && (
-          <div className="max-w-md mx-auto">
-            <p className="text-sm text-gray-500 mb-4">
-              If you have been invited to this list, please sign in to access it.
-            </p>
-            <SignInForm />
-          </div>
-        )}
-        {loggedInUser && (
-          <div className="mt-4">
-            <a
-              href="/"
-              className="inline-block bg-primary text-white px-6 py-2 rounded-md hover:bg-primary-hover transition-colors"
-            >
-              Return to Home
-            </a>
-          </div>
-        )}
+        <div className="mt-4">
+          <a
+            href="/"
+            className="inline-block bg-primary text-white px-6 py-2 rounded-md hover:bg-primary-hover transition-colors"
+          >
+            Return to Home
+          </a>
+        </div>
       </div>
     );
   }
@@ -87,24 +76,14 @@ export function SharedListView({ shareToken }: SharedListViewProps) {
         <p className="text-gray-600 mb-4">
           You have tried to access an invalid list. Please ensure that the list exists and you have permission to view it.
         </p>
-        {!loggedInUser && (
-          <div className="max-w-md mx-auto">
-            <p className="text-sm text-gray-500 mb-4">
-              If you have been invited to this list, please sign in to access it.
-            </p>
-            <SignInForm />
-          </div>
-        )}
-        {loggedInUser && (
-          <div className="mt-4">
-            <a
-              href="/"
-              className="inline-block bg-primary text-white px-6 py-2 rounded-md hover:bg-primary-hover transition-colors"
-            >
-              Return to Home
-            </a>
-          </div>
-        )}
+        <div className="mt-4">
+          <a
+            href="/"
+            className="inline-block bg-primary text-white px-6 py-2 rounded-md hover:bg-primary-hover transition-colors"
+          >
+            Return to Home
+          </a>
+        </div>
       </div>
     );
   }
