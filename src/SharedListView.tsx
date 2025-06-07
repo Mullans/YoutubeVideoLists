@@ -29,7 +29,7 @@ export function SharedListView({ shareToken }: SharedListViewProps) {
     );
   }
 
-  if (!list || !userPermissions || !userPermissions.canView) {
+  if (list === null || !userPermissions || !userPermissions.canView) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-md text-center">
         <h2 className="text-2xl font-bold text-gray-800 mb-4">List Not Available</h2>

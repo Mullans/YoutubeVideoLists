@@ -280,13 +280,13 @@ export const getList = query({
     const userId = await getAuthUserId(ctx);
     const list = await ctx.db.get(args.listId);
     if (!list) {
-      throw new Error("List not found.");
+      return null;
     }
     
     // Check if user has access
     const hasAccess = await checkListAccess(ctx, list, userId);
     if (!hasAccess) {
-      throw new Error("User does not have access to this list.");
+      return null;
     }
     
     return list;
@@ -303,13 +303,13 @@ export const getListByShareToken = query({
       .unique();
     
     if (!list) {
-      throw new Error("List not found.");
+      return null;
     }
     
     // Check if user has access via share token
     const hasAccess = await checkListAccess(ctx, list, userId);
     if (!hasAccess) {
-      throw new Error("User does not have access to this list.");
+      return null;
     }
     
     return list;

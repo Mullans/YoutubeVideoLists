@@ -28,7 +28,7 @@ export function ListView({ listId, onBack }: ListViewProps) {
     );
   }
 
-  if (!list || !userPermissions || !userPermissions.canView) {
+  if (list === null || !userPermissions || !userPermissions.canView) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-md">
         <button
