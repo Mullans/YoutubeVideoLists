@@ -1,6 +1,6 @@
 import { Authenticated, Unauthenticated, useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
-import { SignInForm } from "./SignInForm";
+import { AuthTabs } from "./AuthTabs";
 import { SignOutButton } from "./SignOutButton";
 import { Toaster, toast } from "sonner";
 import { CreateListForm } from "./CreateListForm";
@@ -42,7 +42,7 @@ export default function App() {
 }
 
 function Content() {
-  const loggedInUser = useQuery(api.auth.loggedInUser);
+  const loggedInUser = useQuery(api.users.getCurrentUser);
   const [selectedListId, setSelectedListId] = useState<Id<"lists"> | null>(null);
   const [shareToken, setShareToken] = useState<string | null>(null);
 
@@ -114,7 +114,7 @@ function Content() {
         </h1>
         <Authenticated>
           <p className="text-lg sm:text-xl text-secondary">
-            Welcome back, {loggedInUser?.name ?? loggedInUser?.email ?? "friend"}!
+            Welcome back, {loggedInUser?.username ? `@${loggedInUser.username}` : loggedInUser?.name ?? loggedInUser?.email ?? "friend"}!
           </p>
         </Authenticated>
         <Unauthenticated>
@@ -126,7 +126,7 @@ function Content() {
 
       <Unauthenticated>
         <div className="max-w-md mx-auto bg-white p-6 sm:p-8 rounded-lg shadow-md">
-          <SignInForm />
+          <AuthTabs />
         </div>
       </Unauthenticated>
 

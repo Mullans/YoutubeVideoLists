@@ -14,6 +14,7 @@ export function SharedListView({ shareToken }: SharedListViewProps) {
   const listItems = useQuery(api.listItems.getListItems, list ? { listId: list._id } : "skip");
   const userPermissions = useQuery(api.lists.getUserListPermissions, list ? { listId: list._id } : "skip");
   const loggedInUser = useQuery(api.auth.loggedInUser);
+  const listOwner = useQuery(api.users.getUserByUserId, list ? { userId: list.ownerId } : "skip");
 
   const handleToggleExpand = (itemId: string) => {
     setExpandedItemId(expandedItemId === itemId ? null : itemId);
@@ -103,7 +104,15 @@ export function SharedListView({ shareToken }: SharedListViewProps) {
         <div className="flex justify-between items-start mb-2">
           <div>
             <h2 className="text-3xl font-bold text-primary mb-2">{list.name}</h2>
-            <p className="text-sm text-gray-500">Shared list</p>
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <span>Shared list</span>
+              {listOwner && (
+                <>
+                  <span>•</span>
+                  <span>Created by @{listOwner.username || listOwner.name || listOwner.email || "Unknown"}</span>
+                </>
+              )}
+            </div>
           </div>
           <div className="text-sm text-gray-500">
             <a

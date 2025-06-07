@@ -3,19 +3,10 @@ import { v } from "convex/values";
 import { authTables } from "@convex-dev/auth/server";
 
 const applicationTables = {
-  emailVerifications: defineTable({
-    email: v.string(),
-    token: v.string(),
-    expiresAt: v.number(),
-    verified: v.boolean(),
-  })
-    .index("by_email", ["email"])
-    .index("by_token", ["token"]),
-
   lists: defineTable({
     name: v.string(),
     ownerId: v.id("users"),
-    // Permission settings (optional for migration)
+    shareToken: v.string(),
     permissions: v.optional(v.object({
       public: v.object({
         canView: v.boolean(),
@@ -33,41 +24,59 @@ const applicationTables = {
         canRemove: v.boolean(),
       }),
     })),
-    // Share token for public/user access
-    shareToken: v.optional(v.string()),
-  }).index("by_ownerId", ["ownerId"])
+  })
+    .index("by_ownerId", ["ownerId"])
     .index("by_shareToken", ["shareToken"]),
 
   listItems: defineTable({
     listId: v.id("lists"),
     videoUrl: v.string(),
     title: v.string(),
-    thumbnailUrl: v.string(),
-    tags: v.array(v.string()),
-    ratings: v.object({
-      category1: v.number(), // e.g., Entertainment
-      category2: v.number(), // e.g., Educational
-      category3: v.number(), // e.g., Rewatchability
-    }),
-    addedById: v.id("users"),
-    // New fields for YouTube metadata
     description: v.optional(v.string()),
-    viewCount: v.optional(v.number()),
+    addedById: v.id("users"),
+    thumbnailUrl: v.optional(v.string()),
+    duration: v.optional(v.string()),
+    channelName: v.optional(v.string()),
+    viewCount: v.optional(v.union(v.string(), v.number())),
+    publishedAt: v.optional(v.string()),
+    // Legacy fields for migration
+    tags: v.optional(v.array(v.string())),
+    ratings: v.optional(v.object({
+      category1: v.number(),
+      category2: v.number(),
+      category3: v.number(),
+    })),
     likeCount: v.optional(v.number()),
-    authorName: v.optional(v.string()), // From oEmbed, can be kept
+    authorName: v.optional(v.string()),
   })
     .index("by_listId", ["listId"])
     .index("by_addedById", ["addedById"]),
 
-  // Invitations for specific users
   listInvitations: defineTable({
     listId: v.id("lists"),
     invitedEmail: v.string(),
     invitedById: v.id("users"),
-    status: v.union(v.literal("pending"), v.literal("accepted")),
+    status: v.string(), // "pending", "accepted", "declined"
   })
     .index("by_listId", ["listId"])
     .index("by_invitedEmail", ["invitedEmail"]),
+
+  emailVerifications: defineTable({
+    email: v.string(),
+    token: v.string(),
+    expiresAt: v.number(),
+    verified: v.boolean(),
+  })
+    .index("by_email", ["email"])
+    .index("by_token", ["token"]),
+
+  // Add usernames table to track unique usernames
+  usernames: defineTable({
+    username: v.string(),
+    userId: v.id("users"),
+  })
+    .index("by_username", ["username"])
+    .index("by_userId", ["userId"]),
 };
 
 export default defineSchema({

@@ -10,12 +10,11 @@ interface AddListItemFormProps {
 
 export function AddListItemForm({ listId }: AddListItemFormProps) {
   const [videoUrl, setVideoUrl] = useState("");
-  const [tags, setTags] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const addListItemMutation = useMutation(api.listItems.addListItem);
   const getVideoMetadataAction = useAction(api.videoUtils.getVideoMetadata);
-  const loggedInUser = useQuery(api.auth.loggedInUser);
+  const loggedInUser = useQuery(api.users.getCurrentUser);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -51,27 +50,19 @@ export function AddListItemForm({ listId }: AddListItemFormProps) {
         return;
       }
 
-      const tagsArray = tags.split(",").map(tag => tag.trim()).filter(tag => tag);
-
       // Add the video to the list
       await addListItemMutation({
         listId,
         videoUrl,
         title: result.title,
-        thumbnailUrl: result.thumbnailUrl || "",
-        tags: tagsArray,
-        ratingCategory1: 0,
-        ratingCategory2: 0,
-        ratingCategory3: 0,
-        description: result.description === null ? undefined : result.description,
-        viewCount: result.viewCount === null ? undefined : result.viewCount,
-        likeCount: result.likeCount === null ? undefined : result.likeCount,
-        authorName: result.authorName === null ? undefined : result.authorName,
+        description: result.description || undefined,
+        thumbnailUrl: result.thumbnailUrl || undefined,
+        channelName: result.authorName || undefined,
+        viewCount: result.viewCountFormatted || undefined,
       });
 
       toast.success(`"${result.title}" added to the list!`);
       setVideoUrl("");
-      setTags("");
     } catch (error) {
       toast.error("Failed to add item. " + (error as Error).message);
       console.error(error);
@@ -94,18 +85,6 @@ export function AddListItemForm({ listId }: AddListItemFormProps) {
             placeholder="https://www.youtube.com/watch?v=..."
             className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary"
             required
-            disabled={isSubmitting}
-          />
-        </div>
-        <div>
-          <label htmlFor="tags" className="block text-sm font-medium text-gray-600">Tags (comma-separated)</label>
-          <input
-            id="tags" 
-            type="text" 
-            value={tags} 
-            onChange={(e) => setTags(e.target.value)}
-            placeholder="e.g., tutorial, javascript, react"
-            className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary"
             disabled={isSubmitting}
           />
         </div>

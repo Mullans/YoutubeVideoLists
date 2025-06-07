@@ -8,16 +8,12 @@ export const addListItem = mutation({
     listId: v.id("lists"),
     videoUrl: v.string(),
     title: v.string(),
-    thumbnailUrl: v.string(),
-    tags: v.array(v.string()),
-    ratingCategory1: v.number(),
-    ratingCategory2: v.number(),
-    ratingCategory3: v.number(),
-    // Optional metadata
     description: v.optional(v.string()),
-    viewCount: v.optional(v.number()),
-    likeCount: v.optional(v.number()),
-    authorName: v.optional(v.string()),
+    thumbnailUrl: v.optional(v.string()),
+    duration: v.optional(v.string()),
+    channelName: v.optional(v.string()),
+    viewCount: v.optional(v.string()),
+    publishedAt: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -40,18 +36,13 @@ export const addListItem = mutation({
       listId: args.listId,
       videoUrl: args.videoUrl,
       title: args.title,
-      thumbnailUrl: args.thumbnailUrl,
-      tags: args.tags,
-      ratings: {
-        category1: args.ratingCategory1,
-        category2: args.ratingCategory2,
-        category3: args.ratingCategory3,
-      },
+      description: args.description,
       addedById: userId,
-      description: args.description === null ? undefined : args.description,
-      viewCount: args.viewCount === null ? undefined : args.viewCount,
-      likeCount: args.likeCount === null ? undefined : args.likeCount,
-      authorName: args.authorName === null ? undefined : args.authorName,
+      thumbnailUrl: args.thumbnailUrl,
+      duration: args.duration,
+      channelName: args.channelName,
+      viewCount: args.viewCount,
+      publishedAt: args.publishedAt,
     });
     return listItemId;
   },
@@ -84,17 +75,8 @@ export const getListItems = query({
 export const updateListItem = mutation({
   args: {
     itemId: v.id("listItems"),
-    videoUrl: v.optional(v.string()),
     title: v.optional(v.string()),
-    thumbnailUrl: v.optional(v.string()),
-    tags: v.optional(v.array(v.string())),
-    ratingCategory1: v.optional(v.number()),
-    ratingCategory2: v.optional(v.number()),
-    ratingCategory3: v.optional(v.number()),
     description: v.optional(v.string()),
-    viewCount: v.optional(v.number()),
-    likeCount: v.optional(v.number()),
-    authorName: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -120,33 +102,13 @@ export const updateListItem = mutation({
       throw new Error("User does not have permission to update this item.");
     }
 
-    const { itemId, ...rest } = args;
-    const ratingsUpdate = {
-      ...(args.ratingCategory1 !== undefined && { category1: args.ratingCategory1 }),
-      ...(args.ratingCategory2 !== undefined && { category2: args.ratingCategory2 }),
-      ...(args.ratingCategory3 !== undefined && { category3: args.ratingCategory3 }),
-    };
-
     const updatePayload: Partial<Doc<"listItems">> = {};
     
-    // Helper to add to payload only if defined, converting null to undefined
-    function addOptionalToPayload<K extends keyof typeof rest>(key: K, payloadKey: keyof Doc<"listItems">) {
-      if (rest[key] !== undefined) {
-        updatePayload[payloadKey] = rest[key] === null ? undefined : rest[key] as any;
-      }
+    if (args.title !== undefined) {
+      updatePayload.title = args.title;
     }
-
-    addOptionalToPayload("videoUrl", "videoUrl");
-    addOptionalToPayload("title", "title");
-    addOptionalToPayload("thumbnailUrl", "thumbnailUrl");
-    addOptionalToPayload("tags", "tags");
-    addOptionalToPayload("description", "description");
-    addOptionalToPayload("viewCount", "viewCount");
-    addOptionalToPayload("likeCount", "likeCount");
-    addOptionalToPayload("authorName", "authorName");
-    
-    if (Object.keys(ratingsUpdate).length > 0) {
-      updatePayload.ratings = { ...item.ratings, ...ratingsUpdate };
+    if (args.description !== undefined) {
+      updatePayload.description = args.description;
     }
 
     if (Object.keys(updatePayload).length > 0) {
@@ -156,7 +118,7 @@ export const updateListItem = mutation({
   },
 });
 
-export const deleteListItem = mutation({
+export const removeListItem = mutation({
   args: { itemId: v.id("listItems") },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
