@@ -86,6 +86,14 @@ export function ListSettingsModal({ list, isOpen, onClose }: ListSettingsModalPr
   };
   
   const copyShareUrl = () => {
+    // Check if the list has appropriate permissions for sharing
+    const hasViewAccess = permissions.public.canView || permissions.users.canView || permissions.invited.canView;
+    
+    if (!hasViewAccess) {
+      toast.error("Please configure view permissions before sharing. At least one group (Public, Users, or Invited) must be able to view the list.");
+      return;
+    }
+
     navigator.clipboard.writeText(getShareUrl());
     toast.success("Share link copied to clipboard!");
   };

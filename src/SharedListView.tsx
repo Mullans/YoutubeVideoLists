@@ -32,16 +32,26 @@ export function SharedListView({ shareToken }: SharedListViewProps) {
   if (!list || !userPermissions || !userPermissions.canView) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-md text-center">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">Access Denied</h2>
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">List Not Available</h2>
         <p className="text-gray-600 mb-4">
-          You don't have permission to view this list, or the list doesn't exist.
+          You have tried to access an invalid list. Please ensure that the list exists and you have permission to view it.
         </p>
         {!loggedInUser && (
           <div className="max-w-md mx-auto">
             <p className="text-sm text-gray-500 mb-4">
-              Try signing in if you have been invited to this list.
+              If you have been invited to this list, please sign in to access it.
             </p>
             <SignInForm />
+          </div>
+        )}
+        {loggedInUser && (
+          <div className="mt-4">
+            <a
+              href="/"
+              className="inline-block bg-primary text-white px-6 py-2 rounded-md hover:bg-primary-hover transition-colors"
+            >
+              Return to Home
+            </a>
           </div>
         )}
       </div>

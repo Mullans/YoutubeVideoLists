@@ -37,12 +37,26 @@ export function ListView({ listId, onBack }: ListViewProps) {
         >
           &larr; Back to Lists
         </button>
-        <p className="text-red-500">List not found or you don't have access.</p>
+        <p className="text-red-500">You have tried to access an invalid list. Please ensure that the list exists and you have permission to view it.</p>
       </div>
     );
   }
 
   const copyShareUrl = () => {
+    // Check if the list has appropriate permissions for sharing
+    const permissions = list.permissions || {
+      public: { canView: false, canAdd: false, canRemove: false },
+      users: { canView: false, canAdd: false, canRemove: false },
+      invited: { canView: true, canAdd: true, canRemove: false },
+    };
+
+    const hasViewAccess = permissions.public.canView || permissions.users.canView || permissions.invited.canView;
+    
+    if (!hasViewAccess) {
+      toast.error("Please update your list permissions to allow viewing before sharing. Go to Settings to configure access.");
+      return;
+    }
+
     const baseUrl = window.location.origin;
     const shareUrl = `${baseUrl}/shared/${list.shareToken}`;
     navigator.clipboard.writeText(shareUrl);

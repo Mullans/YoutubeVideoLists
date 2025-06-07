@@ -29,7 +29,7 @@ async function isUserVerified(ctx: any, userId: Id<"users">) {
   // Check the emailVerifications table
   const verification = await ctx.db
     .query("emailVerifications")
-    .withIndex("by_email", (q) => q.eq("email", user.email!))
+    .withIndex("by_email", (q: any) => q.eq("email", user.email!))
     .first();
   
   return verification?.verified || false;
