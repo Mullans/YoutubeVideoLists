@@ -4,6 +4,37 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 
+// Helper function to check if user is verified
+async function isUserVerified(ctx: any, userId: Id<"users">) {
+  const user = await ctx.db.get(userId);
+  if (!user) {
+    return false;
+  }
+  
+  // Anonymous users are considered "verified" for basic functionality
+  if (user.isAnonymous) {
+    return true;
+  }
+  
+  // Users without email are considered verified
+  if (!user.email) {
+    return true;
+  }
+  
+  // Check if email is verified
+  if (user.emailVerificationTime) {
+    return true;
+  }
+  
+  // Check the emailVerifications table
+  const verification = await ctx.db
+    .query("emailVerifications")
+    .withIndex("by_email", (q) => q.eq("email", user.email!))
+    .first();
+  
+  return verification?.verified || false;
+}
+
 export const createList = mutation({
   args: {
     name: v.string(),
@@ -182,6 +213,12 @@ export const removeInvitation = mutation({
       throw new Error("User must be logged in.");
     }
 
+    // Check if user is verified
+    const verified = await isUserVerified(ctx, userId);
+    if (!verified) {
+      throw new Error("Email verification required to manage invitations.");
+    }
+
     const invitation = await ctx.db.get(args.invitationId);
     if (!invitation) {
       throw new Error("Invitation not found.");
@@ -205,6 +242,12 @@ export const resendInvitation = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) {
       throw new Error("User must be logged in.");
+    }
+
+    // Check if user is verified
+    const verified = await isUserVerified(ctx, userId);
+    if (!verified) {
+      throw new Error("Email verification required to resend invitations.");
     }
 
     const invitation = await ctx.db.get(args.invitationId);
@@ -322,6 +365,12 @@ export const inviteUserToList = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) {
       throw new Error("User must be logged in.");
+    }
+    
+    // Check if user is verified
+    const verified = await isUserVerified(ctx, userId);
+    if (!verified) {
+      throw new Error("Email verification required to invite users.");
     }
     
     const list = await ctx.db.get(args.listId);
@@ -475,10 +524,12 @@ async function getUserPermissionsForList(ctx: any, list: any, userId: Id<"users"
       .first();
     
     if (invitation) {
+      // Check if user is verified for invited permissions that allow editing
+      const verified = await isUserVerified(ctx, userId);
       return {
         canView: listPermissions.invited.canView,
-        canAdd: listPermissions.invited.canAdd,
-        canRemove: listPermissions.invited.canRemove,
+        canAdd: verified ? listPermissions.invited.canAdd : false,
+        canRemove: verified ? listPermissions.invited.canRemove : false,
         isOwner: false,
       };
     }
@@ -507,8 +558,6 @@ export const getUserListPermissions = query({
     return await getUserPermissionsForList(ctx, list, userId);
   },
 });
-
-
 
 export const getInvitationDetails = internalQuery({
   args: {
