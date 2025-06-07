@@ -50,6 +50,8 @@ const applicationTables = {
     authorName: v.optional(v.string()),
     // Remove the global watched field - now user-specific
     watched: v.optional(v.boolean()),
+    // Add platform field to track video source
+    platform: v.optional(v.union(v.literal("youtube"), v.literal("vimeo"), v.literal("dailymotion"), v.literal("twitch"), v.literal("other"))),
   })
     .index("by_listId", ["listId"])
     .index("by_addedById", ["addedById"]),

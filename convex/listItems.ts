@@ -15,6 +15,7 @@ export const addListItem = mutation({
     viewCount: v.optional(v.string()),
     publishedAt: v.optional(v.string()),
     likeCount: v.optional(v.number()),
+    platform: v.optional(v.union(v.literal("youtube"), v.literal("vimeo"), v.literal("dailymotion"), v.literal("twitch"), v.literal("other"))),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -45,6 +46,7 @@ export const addListItem = mutation({
       viewCount: args.viewCount,
       publishedAt: args.publishedAt,
       likeCount: args.likeCount,
+      platform: args.platform || "other",
       // Initialize default ratings
       ratings: {
         category1: 0,

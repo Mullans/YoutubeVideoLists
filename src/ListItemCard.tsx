@@ -62,6 +62,116 @@ const formatCount = (num: number | undefined | null): string => {
   return num.toString();
 };
 
+// Helper function to detect if a Twitch URL is a clip
+const isTwitchClip = (url: string): boolean => {
+  try {
+    const urlObj = new URL(url);
+    return urlObj.hostname.includes("twitch.tv") && 
+           (urlObj.pathname.includes("/clip/") || urlObj.hostname.includes("clips.twitch.tv"));
+  } catch {
+    return false;
+  }
+};
+
+// Platform icon component using favicons
+const PlatformIcon = ({ platform, videoUrl }: { platform?: string; videoUrl: string }) => {
+  const iconClass = "w-4 h-4 flex-shrink-0";
+  
+  const getFaviconUrl = (domain: string) => {
+    return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+  };
+
+  switch (platform) {
+    case "youtube":
+      return (
+        <div className="flex items-center gap-1">
+          <img 
+            src={getFaviconUrl("youtube.com")} 
+            alt="YouTube" 
+            className={iconClass}
+            onError={(e) => {
+              // Fallback to a generic video icon if favicon fails
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        </div>
+      );
+    case "vimeo":
+      return (
+        <div className="flex items-center gap-1">
+          <img 
+            src={getFaviconUrl("vimeo.com")} 
+            alt="Vimeo" 
+            className={iconClass}
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        </div>
+      );
+    case "dailymotion":
+      return (
+        <div className="flex items-center gap-1">
+          <img 
+            src={getFaviconUrl("dailymotion.com")} 
+            alt="Dailymotion" 
+            className={iconClass}
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        </div>
+      );
+    case "twitch":
+      const isClip = isTwitchClip(videoUrl);
+      return (
+        <div className="flex items-center gap-1">
+          <img 
+            src={getFaviconUrl("twitch.tv")} 
+            alt="Twitch" 
+            className={iconClass}
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+          {isClip && (
+            <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full font-medium">
+              CLIP
+            </span>
+          )}
+        </div>
+      );
+    default:
+      // For other platforms, try to get favicon from the video URL domain
+      try {
+        const urlObj = new URL(videoUrl);
+        return (
+          <div className="flex items-center gap-1">
+            <img 
+              src={getFaviconUrl(urlObj.hostname)} 
+              alt={urlObj.hostname} 
+              className={iconClass}
+              onError={(e) => {
+                // Fallback to a generic video icon if favicon fails
+                e.currentTarget.outerHTML = `
+                  <svg class="${iconClass} text-gray-500" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                  </svg>
+                `;
+              }}
+            />
+          </div>
+        );
+      } catch {
+        return (
+          <svg className={`${iconClass} text-gray-500`} viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+          </svg>
+        );
+      }
+  }
+};
+
 export function ListItemCard({ item, listOwnerId, userPermissions, isExpanded, onToggleExpand }: ListItemCardProps) {
   const [isEditing, setIsEditing] = useState(false);
 
@@ -188,13 +298,18 @@ export function ListItemCard({ item, listOwnerId, userPermissions, isExpanded, o
           </div>
         )}
         <div className="flex-grow">
-          <h4 className={`text-lg font-semibold hover:underline transition-colors duration-200 ${
-            isWatched ? 'text-green-700' : 'text-primary'
-          }`}>
-            <a href={item.videoUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
-              {item.title}
-            </a>
-          </h4>
+          <div className="flex items-start gap-2">
+            <h4 className={`text-lg font-semibold hover:underline transition-colors duration-200 flex-grow ${
+              isWatched ? 'text-green-700' : 'text-primary'
+            }`}>
+              <a href={item.videoUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+                {item.title}
+              </a>
+            </h4>
+            <div className="flex items-center gap-1 mt-1">
+              <PlatformIcon platform={item.platform} videoUrl={item.videoUrl} />
+            </div>
+          </div>
           <p className="text-xs text-gray-500 mt-1">
             {item.channelName && `by ${item.channelName}`}
             {item.channelName && addedByUser && ', '}

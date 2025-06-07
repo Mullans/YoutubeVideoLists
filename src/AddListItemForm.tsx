@@ -50,16 +50,17 @@ export function AddListItemForm({ listId }: AddListItemFormProps) {
         return;
       }
 
-      // Add the video to the list
+      // Add the video to the list using the cleaned URL
       await addListItemMutation({
         listId,
-        videoUrl,
+        videoUrl: result.cleanedUrl || videoUrl, // Use cleaned URL if available, fallback to original
         title: result.title,
         description: result.description || undefined,
         thumbnailUrl: result.thumbnailUrl || undefined,
         channelName: result.authorName || undefined,
         viewCount: result.viewCountFormatted || undefined,
         likeCount: result.likeCount || undefined,
+        platform: result.platform || "other",
       });
 
       toast.success(`"${result.title}" added to the list!`);
@@ -88,6 +89,10 @@ export function AddListItemForm({ listId }: AddListItemFormProps) {
             required
             disabled={isSubmitting}
           />
+          <p className="text-xs text-gray-500 mt-1">
+            Supports YouTube, Twitch videos & clips, Vimeo, and Dailymotion. 
+            URLs will be automatically cleaned to remove tracking parameters.
+          </p>
         </div>
         <button
           type="submit"
