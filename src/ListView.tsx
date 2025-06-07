@@ -1,7 +1,7 @@
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { Id } from "../convex/_generated/dataModel";
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useEffect } from "react";
 import { toast } from "sonner";
 import { AddListItemForm } from "./AddListItemForm";
 import { ListItemCard } from "./ListItemCard";
@@ -19,6 +19,13 @@ export function ListView({ listId, onBack }: ListViewProps) {
   const listItems = useQuery(api.listItems.getListItems, { listId });
   const userPermissions = useQuery(api.lists.getUserListPermissions, { listId });
   const listOwner = useQuery(api.users.getUserByUserId, list ? { userId: list.ownerId } : "skip");
+
+  // Update page title when list loads
+  useEffect(() => {
+    if (list) {
+      document.title = `${list.name} - VideoList Curator`;
+    }
+  }, [list]);
 
   if (list === undefined || listItems === undefined || userPermissions === undefined) {
     return (

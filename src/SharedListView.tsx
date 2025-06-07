@@ -16,6 +16,13 @@ export function SharedListView({ shareToken }: SharedListViewProps) {
   const loggedInUser = useQuery(api.auth.loggedInUser);
   const listOwner = useQuery(api.users.getUserByUserId, list ? { userId: list.ownerId } : "skip");
 
+  // Update page title when list loads
+  useEffect(() => {
+    if (list) {
+      document.title = `${list.name} (Shared) - VideoList Curator`;
+    }
+  }, [list]);
+
   const handleToggleExpand = (itemId: string) => {
     setExpandedItemId(expandedItemId === itemId ? null : itemId);
   };

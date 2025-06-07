@@ -46,6 +46,11 @@ function Content() {
   const [selectedListId, setSelectedListId] = useState<Id<"lists"> | null>(null);
   const [shareToken, setShareToken] = useState<string | null>(null);
 
+  // Set default page title
+  useEffect(() => {
+    document.title = "VideoList Curator";
+  }, []);
+
   useEffect(() => {
     // Check URL path for routing
     const path = window.location.pathname;
@@ -101,6 +106,7 @@ function Content() {
           // Navigate back to home and clear the URL
           window.history.pushState({}, '', '/');
           setSelectedListId(null);
+          document.title = "VideoList Curator";
         }}
       />
     );
