@@ -76,11 +76,23 @@ export function ListItemCard({ item, listOwnerId, userPermissions, isExpanded, o
 
   const deleteListItemMutation = useMutation(api.listItems.removeListItem);
   const updateListItemMutation = useMutation(api.listItems.updateListItem);
+  const toggleWatchedMutation = useMutation(api.listItems.toggleWatchedStatus);
   const loggedInUser = useQuery(api.auth.loggedInUser);
   const addedByUser = useQuery(api.users.getUserByUserId, item.addedById ? { userId: item.addedById } : "skip");
 
   const isListOwner = userPermissions.isOwner;
   const canEditItem = userPermissions.canRemove || (loggedInUser?._id === item.addedById);
+  const isWatched = item.watched || false;
+
+  const handleWatchedToggle = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card expansion
+    try {
+      const newStatus = await toggleWatchedMutation({ itemId: item._id });
+      toast.success(newStatus ? "Marked as watched" : "Marked as unwatched");
+    } catch (error) {
+      toast.error("Failed to update watched status: " + (error as Error).message);
+    }
+  };
 
   const handleRatingChange = async (categoryKey: "category1" | "category2" | "category3", newRating: number) => {
     if (!isListOwner) return;
@@ -130,26 +142,49 @@ export function ListItemCard({ item, listOwnerId, userPermissions, isExpanded, o
   };
 
   return (
-    <div className="border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+    <div className={`border border-gray-200 rounded-lg shadow-sm overflow-hidden transition-all duration-300 ${
+      isWatched ? 'bg-green-50 border-green-200' : 'bg-white'
+    }`}>
       <div
-        className="p-4 flex gap-4 items-start cursor-pointer hover:bg-gray-50 transition-colors"
+        className={`p-4 flex gap-4 items-start cursor-pointer transition-colors duration-200 ${
+          isWatched 
+            ? 'hover:bg-green-100' 
+            : 'hover:bg-gray-50'
+        }`}
         onClick={() => !isEditing && onToggleExpand(item._id)}
       >
         {item.thumbnailUrl && (
-          <img
-            src={item.thumbnailUrl}
-            alt={`Thumbnail for ${item.title}`}
-            className="w-32 h-20 object-cover rounded-md flex-shrink-0"
-            onError={(e) => (e.currentTarget.style.display = 'none')}
-          />
+          <div className="relative">
+            <img
+              src={item.thumbnailUrl}
+              alt={`Thumbnail for ${item.title}`}
+              className={`w-32 h-20 object-cover rounded-md flex-shrink-0 transition-opacity duration-300 ${
+                isWatched ? 'opacity-75' : 'opacity-100'
+              }`}
+              onError={(e) => (e.currentTarget.style.display = 'none')}
+            />
+            {isWatched && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 rounded-md">
+                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              </div>
+            )}
+          </div>
         )}
         {!item.thumbnailUrl && (
-          <div className="w-32 h-20 bg-gray-200 rounded-md flex items-center justify-center text-gray-500 text-sm flex-shrink-0">
+          <div className={`w-32 h-20 rounded-md flex items-center justify-center text-gray-500 text-sm flex-shrink-0 transition-colors duration-300 ${
+            isWatched ? 'bg-green-100' : 'bg-gray-200'
+          }`}>
             No Thumbnail
           </div>
         )}
         <div className="flex-grow">
-          <h4 className="text-lg font-semibold text-primary hover:underline">
+          <h4 className={`text-lg font-semibold hover:underline transition-colors duration-200 ${
+            isWatched ? 'text-green-700' : 'text-primary'
+          }`}>
             <a href={item.videoUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
               {item.title}
             </a>
@@ -182,30 +217,67 @@ export function ListItemCard({ item, listOwnerId, userPermissions, isExpanded, o
             {item.likeCount !== null && item.likeCount !== undefined && <span>{formatCount(item.likeCount)} likes</span>}
           </div>
         </div>
-        {canEditItem && !isEditing && (
-          <div className="flex-shrink-0 space-x-2">
-            <button
-              onClick={(e) => { 
-                e.stopPropagation(); 
-                setIsEditing(true); 
-                if (!isExpanded) onToggleExpand(item._id);
-              }}
-              className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
-            >
-              Edit
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); handleDelete(); }}
-              className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
-            >
-              Delete
-            </button>
-          </div>
-        )}
+        
+        {/* Button Cluster */}
+        <div className="flex-shrink-0 flex flex-col items-center gap-2">
+          {/* Watched Toggle Button */}
+          <button
+            onClick={handleWatchedToggle}
+            className={`px-3 py-2 rounded-md font-medium text-sm transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+              isWatched
+                ? 'bg-green-500 text-white hover:bg-green-600 focus:ring-green-500 shadow-md'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300 focus:ring-gray-500'
+            }`}
+            title={isWatched ? "Mark as unwatched" : "Mark as watched"}
+          >
+            <div className="flex items-center gap-1">
+              {isWatched ? (
+                <>
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  <span>Watched</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  <span>Watch</span>
+                </>
+              )}
+            </div>
+          </button>
+          
+          {/* Edit and Delete Buttons */}
+          {canEditItem && !isEditing && (
+            <div className="flex gap-2">
+              <button
+                onClick={(e) => { 
+                  e.stopPropagation(); 
+                  setIsEditing(true); 
+                  if (!isExpanded) onToggleExpand(item._id);
+                }}
+                className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+              >
+                Edit
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); handleDelete(); }}
+                className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {(isExpanded || isEditing) && (
-        <div className="p-4 border-t border-gray-200 bg-gray-50">
+        <div className={`p-4 border-t transition-colors duration-300 ${
+          isWatched ? 'border-green-200 bg-green-25' : 'border-gray-200 bg-gray-50'
+        }`}>
           {isEditing ? (
             <form onSubmit={handleUpdate} className="space-y-3">
               <div>
@@ -218,10 +290,9 @@ export function ListItemCard({ item, listOwnerId, userPermissions, isExpanded, o
                 <textarea value={editDescription} onChange={e => setEditDescription(e.target.value)} rows={3} className="mt-1 w-full p-1.5 border rounded-md text-sm" />
               </div>
 
-
               <div className="flex gap-2 mt-2">
-                <button type="submit" className="px-3 py-1.5 text-sm bg-green-500 text-white rounded hover:bg-green-600">Save Changes</button>
-                <button type="button" onClick={() => { setIsEditing(false); }} className="px-3 py-1.5 text-sm bg-gray-300 text-black rounded hover:bg-gray-400">Cancel</button>
+                <button type="submit" className="px-3 py-1.5 text-sm bg-green-500 text-white rounded hover:bg-green-600 transition-colors">Save Changes</button>
+                <button type="button" onClick={() => { setIsEditing(false); }} className="px-3 py-1.5 text-sm bg-gray-300 text-black rounded hover:bg-gray-400 transition-colors">Cancel</button>
               </div>
             </form>
           ) : (

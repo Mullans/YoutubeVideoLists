@@ -51,6 +51,8 @@ export const addListItem = mutation({
         category2: 0,
         category3: 0,
       },
+      // Initialize as unwatched
+      watched: false,
     });
     return listItemId;
   },
@@ -136,6 +138,40 @@ export const updateListItem = mutation({
       await ctx.db.patch(args.itemId, updatePayload);
     }
     return true;
+  },
+});
+
+export const toggleWatchedStatus = mutation({
+  args: {
+    itemId: v.id("listItems"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("User must be logged in.");
+    }
+
+    const item = await ctx.db.get(args.itemId);
+    if (!item) {
+      throw new Error("List item not found.");
+    }
+
+    const list = await ctx.db.get(item.listId);
+    if (!list) {
+      throw new Error("List not found.");
+    }
+
+    // Check if user has permission to view the list (anyone who can view can mark as watched)
+    const hasPermission = await checkUserPermission(ctx, list, userId, "canView");
+    if (!hasPermission) {
+      throw new Error("User does not have permission to update this item.");
+    }
+
+    // Toggle the watched status
+    const newWatchedStatus = !item.watched;
+    await ctx.db.patch(args.itemId, { watched: newWatchedStatus });
+    
+    return newWatchedStatus;
   },
 });
 

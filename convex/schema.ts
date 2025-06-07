@@ -48,6 +48,8 @@ const applicationTables = {
     })),
     likeCount: v.optional(v.number()),
     authorName: v.optional(v.string()),
+    // New watched field
+    watched: v.optional(v.boolean()),
   })
     .index("by_listId", ["listId"])
     .index("by_addedById", ["addedById"]),
