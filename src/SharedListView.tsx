@@ -1,6 +1,6 @@
 import { useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AddListItemForm } from "./AddListItemForm";
 import { ListItemCard } from "./ListItemCard";
 
@@ -18,6 +18,14 @@ export function SharedListView({ shareToken }: SharedListViewProps) {
   const handleToggleExpand = (itemId: string) => {
     setExpandedItemId(expandedItemId === itemId ? null : itemId);
   };
+
+  // If logged in user has access, redirect them to the individual list page
+  useEffect(() => {
+    if (loggedInUser && userPermissions && userPermissions.canView && list) {
+      // Redirect to the individual list page
+      window.location.href = `/lists/${list._id}`;
+    }
+  }, [loggedInUser, userPermissions, list]);
 
   // If list is null, we know access is denied
   if (list === null) {
@@ -45,6 +53,16 @@ export function SharedListView({ shareToken }: SharedListViewProps) {
       <div className="bg-white p-6 rounded-lg shadow-md text-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
         <p className="mt-2 text-gray-600">Loading shared list...</p>
+      </div>
+    );
+  }
+
+  // If logged in user has access, show loading while redirecting
+  if (loggedInUser && userPermissions && userPermissions.canView) {
+    return (
+      <div className="bg-white p-6 rounded-lg shadow-md text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+        <p className="mt-2 text-gray-600">Redirecting to list...</p>
       </div>
     );
   }
@@ -78,7 +96,7 @@ export function SharedListView({ shareToken }: SharedListViewProps) {
     );
   }
 
-  // Show the shared list view for all users with access
+  // Show the shared list view for anonymous users only
   return (
     <div className="bg-white p-6 rounded-lg shadow-md space-y-6">
       <div>
@@ -87,17 +105,14 @@ export function SharedListView({ shareToken }: SharedListViewProps) {
             <h2 className="text-3xl font-bold text-primary mb-2">{list.name}</h2>
             <p className="text-sm text-gray-500">Shared list</p>
           </div>
-          {loggedInUser && (
-            <button
-              onClick={() => {
-                localStorage.setItem('navigateToList', list._id);
-                window.location.href = '/';
-              }}
-              className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors"
+          <div className="text-sm text-gray-500">
+            <a
+              href="/"
+              className="inline-block bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-hover transition-colors"
             >
-              Go to My Dashboard
-            </button>
-          )}
+              Sign In to Manage
+            </a>
+          </div>
         </div>
       </div>
 

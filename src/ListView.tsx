@@ -63,6 +63,13 @@ export function ListView({ listId, onBack }: ListViewProps) {
     toast.success("Share link copied to clipboard!");
   };
 
+  const copyListUrl = () => {
+    const baseUrl = window.location.origin;
+    const listUrl = `${baseUrl}/lists/${list._id}`;
+    navigator.clipboard.writeText(listUrl);
+    toast.success("List URL copied to clipboard!");
+  };
+
   const handleToggleExpand = (itemId: string) => {
     setExpandedItemId(expandedItemId === itemId ? null : itemId);
   };
@@ -80,8 +87,16 @@ export function ListView({ listId, onBack }: ListViewProps) {
           <h2 className="text-3xl font-bold text-primary">{list.name}</h2>
           <div className="flex gap-2">
             <button
+              onClick={copyListUrl}
+              className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
+              title="Copy direct link to this list"
+            >
+              Copy Link
+            </button>
+            <button
               onClick={copyShareUrl}
               className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+              title="Copy shareable link for others"
             >
               Share
             </button>

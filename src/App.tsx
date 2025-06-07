@@ -47,17 +47,29 @@ function Content() {
   const [shareToken, setShareToken] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check if we're on a shared list URL or verification page
+    // Check URL path for routing
     const path = window.location.pathname;
+    
+    // Check for shared list URL
     const sharedMatch = path.match(/^\/shared\/(.+)$/);
     if (sharedMatch) {
       setShareToken(sharedMatch[1]);
+      return;
+    }
+
+    // Check for individual list URL
+    const listMatch = path.match(/^\/lists\/(.+)$/);
+    if (listMatch) {
+      setSelectedListId(listMatch[1] as Id<"lists">);
+      return;
     }
 
     // Check if we need to navigate to a specific list (from shared link redirect)
     const navigateToList = localStorage.getItem('navigateToList');
     if (navigateToList && loggedInUser) {
       localStorage.removeItem('navigateToList');
+      // Navigate to the individual list page
+      window.history.pushState({}, '', `/lists/${navigateToList}`);
       setSelectedListId(navigateToList as Id<"lists">);
     }
   }, [loggedInUser]);
@@ -78,6 +90,20 @@ function Content() {
   // If we have a share token, show the shared list view
   if (shareToken) {
     return <SharedListView shareToken={shareToken} />;
+  }
+
+  // If we have a selected list ID, show the list view
+  if (selectedListId) {
+    return (
+      <ListView
+        listId={selectedListId}
+        onBack={() => {
+          // Navigate back to home and clear the URL
+          window.history.pushState({}, '', '/');
+          setSelectedListId(null);
+        }}
+      />
+    );
   }
 
   return (
@@ -108,18 +134,19 @@ function Content() {
         {loggedInUser && loggedInUser.email && !loggedInUser.emailVerified && (
           <EmailVerificationBanner email={loggedInUser.email} />
         )}
-        {selectedListId ? (
-          <ListView
-            listId={selectedListId}
-            onBack={() => setSelectedListId(null)}
-          />
-        ) : (
-          <div className="space-y-6">
-            {(!loggedInUser?.email || loggedInUser.emailVerified) && <CreateListForm />}
-            <MyListsView onSelectList={setSelectedListId} />
-            <SharedListsView onSelectList={setSelectedListId} />
-          </div>
-        )}
+        <div className="space-y-6">
+          {(!loggedInUser?.email || loggedInUser.emailVerified) && <CreateListForm />}
+          <MyListsView onSelectList={(listId) => {
+            // Navigate to individual list page
+            window.history.pushState({}, '', `/lists/${listId}`);
+            setSelectedListId(listId);
+          }} />
+          <SharedListsView onSelectList={(listId) => {
+            // Navigate to individual list page
+            window.history.pushState({}, '', `/lists/${listId}`);
+            setSelectedListId(listId);
+          }} />
+        </div>
       </Authenticated>
     </div>
   );
