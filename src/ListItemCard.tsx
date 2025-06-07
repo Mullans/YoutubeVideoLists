@@ -5,7 +5,7 @@ import { Doc, Id } from "../convex/_generated/dataModel";
 import { toast } from "sonner";
 
 interface ListItemCardProps {
-  item: Doc<"listItems">;
+  item: Doc<"listItems"> & { watched: boolean }; // Add watched status from query
   listOwnerId: Id<"users">;
   userPermissions: {
     canView: boolean;
@@ -82,10 +82,16 @@ export function ListItemCard({ item, listOwnerId, userPermissions, isExpanded, o
 
   const isListOwner = userPermissions.isOwner;
   const canEditItem = userPermissions.canRemove || (loggedInUser?._id === item.addedById);
-  const isWatched = item.watched || false;
+  const isWatched = item.watched; // Now comes from the query with user-specific data
 
   const handleWatchedToggle = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card expansion
+    
+    if (!loggedInUser) {
+      toast.error("You must be logged in to mark videos as watched.");
+      return;
+    }
+
     try {
       const newStatus = await toggleWatchedMutation({ itemId: item._id });
       toast.success(newStatus ? "Marked as watched" : "Marked as unwatched");
@@ -220,35 +226,37 @@ export function ListItemCard({ item, listOwnerId, userPermissions, isExpanded, o
         
         {/* Button Cluster */}
         <div className="flex-shrink-0 flex flex-col items-center gap-2">
-          {/* Watched Toggle Button */}
-          <button
-            onClick={handleWatchedToggle}
-            className={`px-3 py-2 rounded-md font-medium text-sm transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-              isWatched
-                ? 'bg-green-500 text-white hover:bg-green-600 focus:ring-green-500 shadow-md'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300 focus:ring-gray-500'
-            }`}
-            title={isWatched ? "Mark as unwatched" : "Mark as watched"}
-          >
-            <div className="flex items-center gap-1">
-              {isWatched ? (
-                <>
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                  <span>Watched</span>
-                </>
-              ) : (
-                <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                  <span>Watch</span>
-                </>
-              )}
-            </div>
-          </button>
+          {/* Watched Toggle Button - Only show for logged in users */}
+          {loggedInUser && (
+            <button
+              onClick={handleWatchedToggle}
+              className={`px-3 py-2 rounded-md font-medium text-sm transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                isWatched
+                  ? 'bg-green-500 text-white hover:bg-green-600 focus:ring-green-500 shadow-md'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300 focus:ring-gray-500'
+              }`}
+              title={isWatched ? "Mark as unwatched" : "Mark as watched"}
+            >
+              <div className="flex items-center gap-1">
+                {isWatched ? (
+                  <>
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    <span>Watched</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    <span>Watch</span>
+                  </>
+                )}
+              </div>
+            </button>
+          )}
           
           {/* Edit and Delete Buttons */}
           {canEditItem && !isEditing && (

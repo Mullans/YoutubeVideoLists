@@ -51,8 +51,7 @@ export const addListItem = mutation({
         category2: 0,
         category3: 0,
       },
-      // Initialize as unwatched
-      watched: false,
+      // Remove global watched field - now handled per-user
     });
     return listItemId;
   },
@@ -78,7 +77,29 @@ export const getListItems = query({
       .withIndex("by_listId", (q) => q.eq("listId", args.listId))
       .order("desc") 
       .collect();
-    return items;
+
+    // If user is logged in, get their watched status for each item
+    if (userId) {
+      const userWatchedItems = await ctx.db
+        .query("userWatchedItems")
+        .withIndex("by_userId", (q) => q.eq("userId", userId))
+        .collect();
+      
+      const watchedItemsMap = new Map(
+        userWatchedItems.map(item => [item.itemId, item.watched])
+      );
+
+      return items.map(item => ({
+        ...item,
+        watched: watchedItemsMap.get(item._id) || false,
+      }));
+    }
+
+    // For anonymous users, all items are unwatched
+    return items.map(item => ({
+      ...item,
+      watched: false,
+    }));
   },
 });
 
@@ -167,9 +188,29 @@ export const toggleWatchedStatus = mutation({
       throw new Error("User does not have permission to update this item.");
     }
 
-    // Toggle the watched status
-    const newWatchedStatus = !item.watched;
-    await ctx.db.patch(args.itemId, { watched: newWatchedStatus });
+    // Check if user already has a watched status for this item
+    const existingWatchedItem = await ctx.db
+      .query("userWatchedItems")
+      .withIndex("by_userId_and_itemId", (q) => 
+        q.eq("userId", userId).eq("itemId", args.itemId)
+      )
+      .first();
+
+    let newWatchedStatus: boolean;
+
+    if (existingWatchedItem) {
+      // Toggle existing status
+      newWatchedStatus = !existingWatchedItem.watched;
+      await ctx.db.patch(existingWatchedItem._id, { watched: newWatchedStatus });
+    } else {
+      // Create new watched status (default to true since user is marking as watched)
+      newWatchedStatus = true;
+      await ctx.db.insert("userWatchedItems", {
+        userId,
+        itemId: args.itemId,
+        watched: newWatchedStatus,
+      });
+    }
     
     return newWatchedStatus;
   },
@@ -201,6 +242,17 @@ export const removeListItem = mutation({
       throw new Error("User does not have permission to delete this item.");
     }
     
+    // Delete all user watched statuses for this item
+    const userWatchedItems = await ctx.db
+      .query("userWatchedItems")
+      .withIndex("by_itemId", (q) => q.eq("itemId", args.itemId))
+      .collect();
+    
+    for (const watchedItem of userWatchedItems) {
+      await ctx.db.delete(watchedItem._id);
+    }
+    
+    // Delete the item itself
     await ctx.db.delete(args.itemId);
     return true;
   },

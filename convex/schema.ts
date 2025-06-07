@@ -48,11 +48,21 @@ const applicationTables = {
     })),
     likeCount: v.optional(v.number()),
     authorName: v.optional(v.string()),
-    // New watched field
+    // Remove the global watched field - now user-specific
     watched: v.optional(v.boolean()),
   })
     .index("by_listId", ["listId"])
     .index("by_addedById", ["addedById"]),
+
+  // New table for user-specific watched status
+  userWatchedItems: defineTable({
+    userId: v.id("users"),
+    itemId: v.id("listItems"),
+    watched: v.boolean(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_itemId", ["itemId"])
+    .index("by_userId_and_itemId", ["userId", "itemId"]),
 
   listInvitations: defineTable({
     listId: v.id("lists"),
