@@ -14,6 +14,7 @@ export const addListItem = mutation({
     channelName: v.optional(v.string()),
     viewCount: v.optional(v.string()),
     publishedAt: v.optional(v.string()),
+    likeCount: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -43,6 +44,13 @@ export const addListItem = mutation({
       channelName: args.channelName,
       viewCount: args.viewCount,
       publishedAt: args.publishedAt,
+      likeCount: args.likeCount,
+      // Initialize default ratings
+      ratings: {
+        category1: 0,
+        category2: 0,
+        category3: 0,
+      },
     });
     return listItemId;
   },
@@ -77,6 +85,9 @@ export const updateListItem = mutation({
     itemId: v.id("listItems"),
     title: v.optional(v.string()),
     description: v.optional(v.string()),
+    ratingCategory1: v.optional(v.number()),
+    ratingCategory2: v.optional(v.number()),
+    ratingCategory3: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -109,6 +120,16 @@ export const updateListItem = mutation({
     }
     if (args.description !== undefined) {
       updatePayload.description = args.description;
+    }
+    
+    // Handle rating updates
+    if (args.ratingCategory1 !== undefined || args.ratingCategory2 !== undefined || args.ratingCategory3 !== undefined) {
+      const currentRatings = item.ratings || { category1: 0, category2: 0, category3: 0 };
+      updatePayload.ratings = {
+        category1: args.ratingCategory1 !== undefined ? args.ratingCategory1 : currentRatings.category1,
+        category2: args.ratingCategory2 !== undefined ? args.ratingCategory2 : currentRatings.category2,
+        category3: args.ratingCategory3 !== undefined ? args.ratingCategory3 : currentRatings.category3,
+      };
     }
 
     if (Object.keys(updatePayload).length > 0) {

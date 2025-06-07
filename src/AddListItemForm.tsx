@@ -59,6 +59,7 @@ export function AddListItemForm({ listId }: AddListItemFormProps) {
         thumbnailUrl: result.thumbnailUrl || undefined,
         channelName: result.authorName || undefined,
         viewCount: result.viewCountFormatted || undefined,
+        likeCount: result.likeCount || undefined,
       });
 
       toast.success(`"${result.title}" added to the list!`);
