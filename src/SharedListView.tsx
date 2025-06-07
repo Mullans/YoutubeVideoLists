@@ -1,6 +1,6 @@
 import { useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { AddListItemForm } from "./AddListItemForm";
 import { ListItemCard } from "./ListItemCard";
 
@@ -49,25 +49,6 @@ export function SharedListView({ shareToken }: SharedListViewProps) {
     );
   }
 
-  // If logged in user has access, redirect them to the main list view
-  useEffect(() => {
-    if (loggedInUser && userPermissions && userPermissions.canView && list) {
-      // Set the list in localStorage so the main app can navigate to it
-      localStorage.setItem('navigateToList', list._id);
-      window.location.href = `/`;
-    }
-  }, [loggedInUser, userPermissions, list]);
-
-  // If logged in user has access, show loading while redirecting
-  if (loggedInUser && userPermissions && userPermissions.canView) {
-    return (
-      <div className="bg-white p-6 rounded-lg shadow-md text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-        <p className="mt-2 text-gray-600">Redirecting to list...</p>
-      </div>
-    );
-  }
-
   // If no permissions to view
   if (!userPermissions || !userPermissions.canView) {
     return (
@@ -97,12 +78,27 @@ export function SharedListView({ shareToken }: SharedListViewProps) {
     );
   }
 
-  // Only non-logged-in users should see the shared list view
+  // Show the shared list view for all users with access
   return (
     <div className="bg-white p-6 rounded-lg shadow-md space-y-6">
       <div>
-        <h2 className="text-3xl font-bold text-primary mb-2">{list.name}</h2>
-        <p className="text-sm text-gray-500">Shared list</p>
+        <div className="flex justify-between items-start mb-2">
+          <div>
+            <h2 className="text-3xl font-bold text-primary mb-2">{list.name}</h2>
+            <p className="text-sm text-gray-500">Shared list</p>
+          </div>
+          {loggedInUser && (
+            <button
+              onClick={() => {
+                localStorage.setItem('navigateToList', list._id);
+                window.location.href = '/';
+              }}
+              className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors"
+            >
+              Go to My Dashboard
+            </button>
+          )}
+        </div>
       </div>
 
       {userPermissions.canAdd && <AddListItemForm listId={list._id} />}
