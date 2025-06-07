@@ -1,6 +1,6 @@
 import { useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AddListItemForm } from "./AddListItemForm";
 import { ListItemCard } from "./ListItemCard";
 import { SignInForm } from "./SignInForm";
@@ -20,6 +20,37 @@ export function SharedListView({ shareToken }: SharedListViewProps) {
     setExpandedItemId(expandedItemId === itemId ? null : itemId);
   };
 
+  // If list is null, we know access is denied
+  if (list === null) {
+    return (
+      <div className="bg-white p-6 rounded-lg shadow-md text-center">
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">List Not Available</h2>
+        <p className="text-gray-600 mb-4">
+          You have tried to access an invalid list. Please ensure that the list exists and you have permission to view it.
+        </p>
+        {!loggedInUser && (
+          <div className="max-w-md mx-auto">
+            <p className="text-sm text-gray-500 mb-4">
+              If you have been invited to this list, please sign in to access it.
+            </p>
+            <SignInForm />
+          </div>
+        )}
+        {loggedInUser && (
+          <div className="mt-4">
+            <a
+              href="/"
+              className="inline-block bg-primary text-white px-6 py-2 rounded-md hover:bg-primary-hover transition-colors"
+            >
+              Return to Home
+            </a>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // If we have a list but still loading permissions
   if (list === undefined || userPermissions === undefined) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-md text-center">
@@ -29,7 +60,27 @@ export function SharedListView({ shareToken }: SharedListViewProps) {
     );
   }
 
-  if (list === null || !userPermissions || !userPermissions.canView) {
+  // If logged in user has access, redirect them to the main list view
+  useEffect(() => {
+    if (loggedInUser && userPermissions && userPermissions.canView && list) {
+      // Set the list in localStorage so the main app can navigate to it
+      localStorage.setItem('navigateToList', list._id);
+      window.location.href = `/`;
+    }
+  }, [loggedInUser, userPermissions, list]);
+
+  // If logged in user has access, show loading while redirecting
+  if (loggedInUser && userPermissions && userPermissions.canView) {
+    return (
+      <div className="bg-white p-6 rounded-lg shadow-md text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+        <p className="mt-2 text-gray-600">Redirecting to list...</p>
+      </div>
+    );
+  }
+
+  // If no permissions to view
+  if (!userPermissions || !userPermissions.canView) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-md text-center">
         <h2 className="text-2xl font-bold text-gray-800 mb-4">List Not Available</h2>
@@ -67,6 +118,7 @@ export function SharedListView({ shareToken }: SharedListViewProps) {
     );
   }
 
+  // Only non-logged-in users should see the shared list view
   return (
     <div className="bg-white p-6 rounded-lg shadow-md space-y-6">
       <div>

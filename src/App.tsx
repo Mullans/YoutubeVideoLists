@@ -14,10 +14,21 @@ import { EmailVerificationBanner } from "./EmailVerificationBanner";
 import { EmailVerificationPage } from "./EmailVerificationPage";
 
 export default function App() {
+  const handleHeaderClick = () => {
+    // Clear any navigation state and go to home
+    localStorage.removeItem('navigateToList');
+    window.location.href = '/';
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm h-16 flex justify-between items-center border-b shadow-sm px-4 sm:px-6 lg:px-8">
-        <h2 className="text-xl font-semibold text-primary">VideoList Curator</h2>
+        <button 
+          onClick={handleHeaderClick}
+          className="text-xl font-semibold text-primary hover:text-primary-hover transition-colors cursor-pointer"
+        >
+          VideoList Curator
+        </button>
         <SignOutButton />
       </header>
       <main className="flex-1 p-4 sm:p-6 lg:p-8">
@@ -42,7 +53,14 @@ function Content() {
     if (sharedMatch) {
       setShareToken(sharedMatch[1]);
     }
-  }, []);
+
+    // Check if we need to navigate to a specific list (from shared link redirect)
+    const navigateToList = localStorage.getItem('navigateToList');
+    if (navigateToList && loggedInUser) {
+      localStorage.removeItem('navigateToList');
+      setSelectedListId(navigateToList as Id<"lists">);
+    }
+  }, [loggedInUser]);
 
   // Check if we're on the email verification page
   if (window.location.pathname === "/verify-email") {
