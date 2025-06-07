@@ -1,7 +1,6 @@
 "use node";
 import { internalAction } from "./_generated/server";
 import { v } from "convex/values";
-import { Resend } from "resend";
 
 export const sendVerificationEmail = internalAction({
   args: {
@@ -11,7 +10,10 @@ export const sendVerificationEmail = internalAction({
   handler: async (ctx, args) => {
     const apiKey = process.env.RESEND_API_KEY;
     console.log("📧 API Key prefix:", apiKey ? apiKey.substring(0, 10) + "..." : "NOT_FOUND");
-    const resend = new Resend(apiKey!);
+    
+    if (!apiKey) {
+      throw new Error("RESEND_API_KEY environment variable is not set");
+    }
 
     const verificationUrl = `https://seaninashoe.com/verify-email?token=${args.token}`;
 
@@ -35,17 +37,40 @@ export const sendVerificationEmail = internalAction({
       </div>
     `;
 
-    const { data, error } = await resend.emails.send({
-      from: "VideoList Curator <noreply@seaninashoe.com>",
+    const emailPayload = {
+      from: "noreply@seaninashoe.com",
       to: [args.email],
       subject: "Verify your email address - VideoList Curator",
       html: emailHtml,
-    });
+    };
 
-    if (error) {
-      throw new Error("Failed to send verification email: " + JSON.stringify(error));
+    try {
+      console.log("📨 Attempting to send verification email via direct HTTP request...");
+      
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(emailPayload),
+      });
+
+      const responseText = await response.text();
+      console.log("📨 Resend API response status:", response.status);
+      console.log("📨 Resend API response:", responseText);
+
+      if (!response.ok) {
+        console.error("❌ Failed to send verification email:", responseText);
+        throw new Error(`Failed to send verification email: ${response.status} ${responseText}`);
+      }
+
+      const data = JSON.parse(responseText);
+      console.log("✅ Verification email sent successfully:", data);
+      return data;
+    } catch (error) {
+      console.error("💥 Error sending verification email:", error);
+      throw error;
     }
-
-    return data;
   },
 });
